@@ -1,0 +1,219 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Login - Astro Editor">
+  <div class="container">
+    <div class="auth-form">
+      <h1>Log In</h1>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Enter email" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter password" required />
+        </div>
+        
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" id="remember" />
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="forgot-password">Forgot password?</a>
+        </div>
+        
+        <div id="error-message" class="error-message"></div>
+        <button type="submit" class="btn-submit" id="login-btn">Log In</button>
+      </form>
+      
+      <div class="auth-footer">
+        Don't have an account? <a href="/signup">Sign Up</a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+// Login function using the API
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const errorElement = document.getElementById('error-message');
+  const loginBtn = document.getElementById('login-btn');
+  
+  errorElement.textContent = '';
+  
+  if (!email) {
+    errorElement.textContent = 'Email is required';
+    return;
+  }
+  
+  if (!password) {
+    errorElement.textContent = 'Password is required';
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Logging in...';
+  
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+    
+    console.log('Login successful:', data);
+    
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect') || '/';
+    
+    console.log("Login successful, redirecting to:", redirectUrl);
+    
+    errorElement.textContent = 'Login successful! Redirecting...';
+    errorElement.style.color = '#4caf50';
+
+    setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 500);
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    errorElement.textContent = error.message || 'Login failed';
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Log In';
+  }
+});
+</script>
+
+<style>
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - var(--navbar-height));
+    padding: 1rem;
+  }
+  
+  .auth-form {
+    background-color: var(--secondary-bg);
+    border-radius: 8px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 10px var(--shadow-color);
+  }
+  
+  h1 {
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-size: 0.9rem;
+  }
+  
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+  }
+  
+  input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(79, 158, 250, 0.2);
+  }
+  
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+  }
+  
+  .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  
+  .forgot-password {
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    text-decoration: none;
+  }
+  
+  .forgot-password:hover {
+    text-decoration: underline;
+  }
+  
+  .btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-submit:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-2px);
+  }
+  
+  .auth-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  
+  .auth-footer a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .auth-footer a:hover {
+    text-decoration: underline;
+  }
+</style>

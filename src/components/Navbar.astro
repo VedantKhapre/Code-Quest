@@ -1,0 +1,135 @@
+---
+---
+
+<nav class="navbar">
+  <div class="navbar-container" style="width: 100%; box-sizing: border-box;">
+    <div class="logo">
+      <a href="/">
+        <img src="/Frame 5.svg" alt="Logo" height="32" />
+      </a>
+    </div>
+    <div class="navbar-links" id="navbar-links">
+      <a href="/profile" class="nav-link profile-link" style="display: none;">Profile</a>
+      <a href="/signup" class="nav-link signup-link">Signup</a>
+      <a href="/login" class="nav-link btn-login login-link">Login</a>
+      <button class="nav-link logout-btn" style="display: none;">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<script>
+  function updateNavbar() {
+    const isLoggedIn = localStorage.getItem('token') !== null;
+    const loginLink = document.querySelector('.login-link');
+    const signupLink = document.querySelector('.signup-link');
+    const profileLink = document.querySelector('.profile-link');
+    const logoutBtn = document.querySelector('.logout-btn');
+    
+    if (isLoggedIn) {
+      loginLink.style.display = 'none';
+      signupLink.style.display = 'none';
+      profileLink.style.display = 'block';
+      logoutBtn.style.display = 'block';
+    } else {
+      loginLink.style.display = 'block';
+      signupLink.style.display = 'block';
+      profileLink.style.display = 'none';
+      logoutBtn.style.display = 'none';
+    }
+  }
+  
+  document.querySelector('.logout-btn').addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  });
+  
+  updateNavbar();
+  document.addEventListener('DOMContentLoaded', updateNavbar);
+</script>
+
+<style>
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: var(--secondary-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+  }
+
+  .navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    padding: 0 20px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+  }
+  
+  .logo img {
+    height: 32px;
+  }
+
+  .navbar-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-left: auto;
+  }
+
+  .nav-link {
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .nav-link:hover {
+    background-color: var(--hover-bg);
+    color: var(--accent-color);
+  }
+
+  .btn-login {
+    background-color: var(--accent-color);
+    color: white;
+  }
+
+  .btn-login:hover {
+    background-color: var(--accent-hover);
+    color: white;
+    transform: translateY(-2px);
+  }
+  
+  .logout-btn {
+    background-color: transparent;
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .logout-btn:hover {
+    background-color: #e74c3c;
+    color: white;
+  }
+</style>

@@ -1,0 +1,22 @@
+services:
+  code-executor:
+    build: .
+    container_name: code-executor
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    volumes:
+      - ./src:/app/src
+    security_opt:
+      - seccomp=unconfined
+    cap_add:
+      - SYS_PTRACE
+    ulimits:
+      nproc: 100
+      nofile:
+        soft: 1024
+        hard: 2048
+    deploy:
+      resources:
+        limits:
+          memory: 512M
