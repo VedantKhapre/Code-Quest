@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Badge } from 'react-bootstrap';
 import questionsData from '../Questions/question.json';
+import HintSystem from './HintSystem';
 import '../styles/global.css';
 
 const QuestionPanel = ({ currentIndex: propIndex, onQuestionChange, solvedQuestions = [] }) => {
@@ -71,7 +72,14 @@ const QuestionPanel = ({ currentIndex: propIndex, onQuestionChange, solvedQuesti
         <div className="question-description">
           {currentQuestion.description || 'No description available'}
         </div>
-      </div>
+        {currentQuestion.hints && currentQuestion.hints.length > 0 && (
+                  <HintSystem 
+                    hints={currentQuestion.hints} 
+                    questionId={currentQuestion.id}
+                  />
+                )}
+              </div>
+      
       <div className="navigation-buttons">
         <Button 
           className="nav-button"

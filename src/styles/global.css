@@ -896,3 +896,65 @@ margin: 0;
   display: block !important;
   margin: 1em auto !important;
 }
+
+.hint-system {
+  margin: 20px 0;
+}
+
+.hint-display {
+  background: rgba(30, 35, 44, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  margin-top: 8px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.hint-header h5 {
+  color: #4f9efa;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.hint-content {
+  color: #e0e7ff;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}
+
+.hint-footer {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.hint-system .btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.hint-system .btn:hover {
+  transform: translateY(-1px);
+}
+
+.hint-system .btn-info {
+  background: linear-gradient(135deg, #4f9efa, #2e87f8);
+  border: none;
+  box-shadow: 0 2px 12px rgba(79, 158, 250, 0.3);
+}
+
+.hint-system .btn-primary {
+  background: linear-gradient(135deg, #4f9efa, #2e87f8);
+  border: none;
+}
+
+.hint-system .btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(79, 158, 250, 0.5);
+  color: #4f9efa;
+}
