@@ -2,48 +2,71 @@
 ---
 
 <nav class="navbar">
-  <div class="navbar-container" style="width: 100%; box-sizing: border-box;">
+  <div class="navbar-container">
     <div class="logo">
       <a href="/">
         <img src="/Frame 5.svg" alt="Logo" height="32" />
       </a>
     </div>
     <div class="navbar-links" id="navbar-links">
+      <a href="/home" class="nav-link dashboard-link" style="display: none;">Dashboard</a>
       <a href="/profile" class="nav-link profile-link" style="display: none;">Profile</a>
       <a href="/signup" class="nav-link signup-link">Signup</a>
       <a href="/login" class="nav-link btn-login login-link">Login</a>
-      <button class="nav-link logout-btn" style="display: none;">Logout</button>
+      <span class=" logout-btn" style="display: none; cursor: pointer;">
+        <span id="navbar-username"></span>
+      </span>
     </div>
   </div>
 </nav>
 
 <script>
+  const loginLink = document.querySelector('.login-link') as HTMLElement;
+  const signupLink = document.querySelector('.signup-link') as HTMLElement;
+  const profileLink = document.querySelector('.profile-link') as HTMLElement;
+  const logoutBtn = document.querySelector('.logout-btn') as HTMLElement;
+  const dashboardLink = document.querySelector('.dashboard-link') as HTMLAnchorElement;
+
   function updateNavbar() {
-    const isLoggedIn = localStorage.getItem('token') !== null;
-    const loginLink = document.querySelector('.login-link');
-    const signupLink = document.querySelector('.signup-link');
-    const profileLink = document.querySelector('.profile-link');
-    const logoutBtn = document.querySelector('.logout-btn');
-    
-    if (isLoggedIn) {
-      loginLink.style.display = 'none';
-      signupLink.style.display = 'none';
-      profileLink.style.display = 'block';
-      logoutBtn.style.display = 'block';
+    const userStr = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    const usernameSpan = document.getElementById('navbar-username');
+
+    let user = null;
+    try {
+      user = userStr ? JSON.parse(userStr) : null;
+    } catch {}
+
+    if (token && user) {
+      if (loginLink) loginLink.style.display = 'none';
+      if (signupLink) signupLink.style.display = 'none';
+      if (profileLink) profileLink.style.display = 'block';
+      if (logoutBtn) {
+        logoutBtn.style.display = 'block';
+        if (usernameSpan) usernameSpan.textContent = `Hello, ${user.name || 'User'}`;
+      }
+      if (dashboardLink) {
+        dashboardLink.style.display = 'block';
+        if (user.role === 'admin') {
+          dashboardLink.href = '/admin';
+          dashboardLink.textContent = 'Admin Dashboard';
+        } else {
+          dashboardLink.href = '/home';
+          dashboardLink.textContent = 'Dashboard';
+        }
+      }
     } else {
-      loginLink.style.display = 'block';
-      signupLink.style.display = 'block';
-      profileLink.style.display = 'none';
-      logoutBtn.style.display = 'none';
+      if (loginLink) loginLink.style.display = 'block';
+      if (signupLink) signupLink.style.display = 'block';
+      if (profileLink) profileLink.style.display = 'none';
+      if (logoutBtn) {
+        logoutBtn.style.display = 'none';
+        if (usernameSpan) usernameSpan.textContent = '';
+      }
+      if (dashboardLink) dashboardLink.style.display = 'none';
     }
   }
-  
-  document.querySelector('.logout-btn').addEventListener('click', () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/';
-  });
-  
+
   updateNavbar();
   document.addEventListener('DOMContentLoaded', updateNavbar);
 </script>
@@ -118,18 +141,15 @@
   
   .logout-btn {
     background-color: transparent;
-    border: 1px solid #e74c3c;
-    color: #e74c3c;
-    cursor: pointer;
+    border: 1px solid #6e10e7;
+     color: var(--text-color);
+   
     font-size: 14px;
     font-weight: 500;
     padding: 8px 12px;
     border-radius: 6px;
-    transition: all 0.2s ease;
+  
   }
   
-  .logout-btn:hover {
-    background-color: #e74c3c;
-    color: white;
-  }
+
 </style>
