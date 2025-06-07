@@ -7,24 +7,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  user
+  admin
+}
+
 model User {
   id        String   @id @default(uuid())
+  name      String
   email     String   @unique
   password  String
-  name      String?
+  role      String
   createdAt DateTime @default(now())
-  progress  Progress[]
+  progresses Progress[]
 }
 
 model Progress {
   id          Int      @id @default(autoincrement())
-  userId      String
+  userId      String   // <-- Change from Int to String
   questionId  Int
-  solved      Boolean  @default(true)
+  solved      Boolean  @default(false)
   solvedAt    DateTime @default(now())
   code        String?
   language    String   @default("cpp")
   user        User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, questionId])
+}
+
+model Question {
+  id              Int      @id @default(autoincrement())
+  question_number Int
+  title           String
+  description     String
+  answer          String
+  difficulty      Int
+  hints           String   // Store as JSON string: '["hint1","hint2"]'
+  name            String
+  createdAt       DateTime @default(now())
 }

@@ -1,16 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 
-// Use a singleton pattern for Prisma Client
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL environment variable is not set.');
+}
+
 let prisma;
 
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient();
 } else {
-  // Prevent multiple instances in development
-  if (!global.prisma) {
-    global.prisma = new PrismaClient();
+  // @ts-ignore
+  if (!globalThis.prisma) {
+    // @ts-ignore
+    globalThis.prisma = new PrismaClient();
   }
-  prisma = global.prisma;
+  // @ts-ignore
+  prisma = globalThis.prisma;
 }
 
 export default prisma;

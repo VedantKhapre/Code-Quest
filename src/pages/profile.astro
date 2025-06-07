@@ -9,7 +9,8 @@ import Layout from '../layouts/Layout.astro';
       <p>Please <a href="/login">log in</a> to view this page.</p>
     </div>
     
-    <div id="profile-content" style="display: none;">
+    <!-- User Profile -->
+    <div id="profile-content-user" style="display: none;">
       <h1>Profile Page</h1>
       <p>Your account information is displayed below.</p>
       
@@ -58,6 +59,37 @@ import Layout from '../layouts/Layout.astro';
       </div>
       
     </div>
+
+    <!-- Admin Profile -->
+    <div id="profile-content-admin" style="display: none;">
+      <h1>Admin Profile</h1>
+      <p>Welcome, admin! Here are your account details and options.</p>
+      <div class="profile-section mt-4">
+        <h2>Account Details</h2>
+        <div class="profile-info">
+          <div class="profile-field">
+            <label>Name</label>
+            <p id="admin-profile-name">Loading...</p>
+          </div>
+          <div class="profile-field">
+            <label>Email</label>
+            <p id="admin-profile-email">Loading...</p>
+          </div>
+          <div class="profile-field">
+            <label>Joined</label>
+            <p id="admin-profile-created">Loading...</p>
+          </div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <h2>Admin Options</h2>
+        <div class="buttons-container">
+          <a href="/admin-history" class="btn-edit">History</a>
+          <a href="/admin-settings" class="btn-edit">Settings</a>
+          <button class="btn-logout" id="admin-profile-logout">Logout</button>
+        </div>
+      </div>
+    </div>
   </div>
 </Layout>
 
@@ -65,47 +97,97 @@ import Layout from '../layouts/Layout.astro';
   function checkAuth() {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
-    
     const loginRequired = document.getElementById('login-required');
-    const profileContent = document.getElementById('profile-content');
-    
+    const userContent = document.getElementById('profile-content-user');
+    const adminContent = document.getElementById('profile-content-admin');
+
+    if (!loginRequired || !userContent || !adminContent) return;
+
     if (!token || !userStr) {
-      // Not logged in
       loginRequired.style.display = 'block';
-      profileContent.style.display = 'none';
+      userContent.style.display = 'none';
+      adminContent.style.display = 'none';
       return;
     }
-    
     try {
-      // User is logged in, display profile
       const user = JSON.parse(userStr);
-      document.getElementById('profile-name').textContent = user.name || 'Not provided';
-      document.getElementById('profile-email').textContent = user.email || 'Not provided';
-      
-      if (user.createdAt) {
-        const date = new Date(user.createdAt);
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('profile-created').textContent = date.toLocaleDateString(undefined, options);
+
+      if (user.role === 'user') {
+        // Show user profile
+        loginRequired.style.display = 'none';
+        userContent.style.display = 'block';
+        adminContent.style.display = 'none';
+
+        // Fill user info
+        const nameEl = document.getElementById('profile-name');
+        const emailEl = document.getElementById('profile-email');
+        const createdEl = document.getElementById('profile-created');
+        if (nameEl) nameEl.textContent = user.name || 'Not provided';
+        if (emailEl) emailEl.textContent = user.email || 'Not provided';
+        if (createdEl) {
+          if (user.createdAt) {
+            const date = new Date(user.createdAt);
+            const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            createdEl.textContent = date.toLocaleDateString('en-US', options);
+          } else {
+            createdEl.textContent = 'Not available';
+          }
+        }
+      } else if (user.role === 'admin') {
+        // Show admin profile
+        loginRequired.style.display = 'none';
+        userContent.style.display = 'none';
+        adminContent.style.display = 'block';
+
+        // Fill admin info
+        const nameEl = document.getElementById('admin-profile-name');
+        const emailEl = document.getElementById('admin-profile-email');
+        const createdEl = document.getElementById('admin-profile-created');
+        if (nameEl) nameEl.textContent = user.name || 'Not provided';
+        if (emailEl) emailEl.textContent = user.email || 'Not provided';
+        if (createdEl) {
+          if (user.createdAt) {
+            const date = new Date(user.createdAt);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            createdEl.textContent = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          } else {
+            createdEl.textContent = 'Not available';
+          }
+        }
       } else {
-        document.getElementById('profile-created').textContent = 'Not available';
+        // Unknown role
+        loginRequired.style.display = 'block';
+        userContent.style.display = 'none';
+        adminContent.style.display = 'none';
       }
-      
-      loginRequired.style.display = 'none';
-      profileContent.style.display = 'block';
-      
     } catch (error) {
-      console.error('Error parsing user data:', error);
       loginRequired.style.display = 'block';
-      profileContent.style.display = 'none';
+      userContent.style.display = 'none';
+      adminContent.style.display = 'none';
     }
   }
-  
-  document.getElementById('profile-logout').addEventListener('click', () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/';
+
+  // Logout for user and admin
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    const logoutBtn = document.getElementById('profile-logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+      });
+    }
+    const adminLogoutBtn = document.getElementById('admin-profile-logout');
+    if (adminLogoutBtn) {
+      adminLogoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/';
+      });
+    }
   });
-  
+
   // Fetch and display progress
   async function loadUserProgress() {
     try {
@@ -116,37 +198,41 @@ import Layout from '../layouts/Layout.astro';
       const questionsResponse = await fetch('/src/Questions/question.json');
       const questions = await questionsResponse.json();
       const totalQuestions = questions.length;
-      document.getElementById('total-questions').textContent = totalQuestions;
-      
+      const totalQuestionsEl = document.getElementById('total-questions');
+      if (totalQuestionsEl) totalQuestionsEl.textContent = totalQuestions;
+
       // Get user progress from API
       const progressResponse = await fetch(`/api/progress?token=${token}`);
       const progressData = await progressResponse.json();
       
+      const recentSolvedList = document.getElementById('recent-solved-list');
+      if (!recentSolvedList) return;
+
       if (!progressData.progress) {
-        document.getElementById('recent-solved-list').innerHTML = '<p>You have not solved any questions yet.</p>';
+        recentSolvedList.innerHTML = '<p>You have not solved any questions yet.</p>';
         return;
       }
       
       const solvedQuestions = progressData.progress;
       
       // Update solved count and percentage
-      const solvedCount = solvedQuestions.length;
-      document.getElementById('solved-count').textContent = solvedCount;
+      const solvedCountEl = document.getElementById('solved-count');
+      if (solvedCountEl) solvedCountEl.textContent = solvedQuestions.length;
       
-      const percentage = Math.round((solvedCount / totalQuestions) * 100);
-      document.getElementById('progress-percentage').textContent = `${percentage}%`;
-      document.getElementById('progress-bar').style.width = `${percentage}%`;
+      const percentage = Math.round((solvedQuestions.length / totalQuestions) * 100);
+      const progressPercentageEl = document.getElementById('progress-percentage');
+      if (progressPercentageEl) progressPercentageEl.textContent = `${percentage}%`;
+      const progressBarEl = document.getElementById('progress-bar');
+      if (progressBarEl) progressBarEl.style.width = `${percentage}%`;
       
       // Display recently solved questions
-      const recentSolvedList = document.getElementById('recent-solved-list');
-      
       if (solvedQuestions.length === 0) {
         recentSolvedList.innerHTML = '<p>You have not solved any questions yet.</p>';
         return;
       }
       
-      const solvedHTML = solvedQuestions.slice(0, 5).map(item => {
-        const question = questions.find(q => q.id === item.questionId);
+      const solvedHTML = solvedQuestions.slice(0, 5).map((item: any) => {
+        const question = questions.find((q: any) => q.id === item.questionId);
         if (!question) return '';
         
         const solvedDate = new Date(item.solvedAt).toLocaleDateString();
@@ -168,13 +254,14 @@ import Layout from '../layouts/Layout.astro';
       
     } catch (error) {
       console.error('Error loading progress:', error);
-      document.getElementById('recent-solved-list').innerHTML = '<p>Failed to load progress data.</p>';
+      const recentSolvedList = document.getElementById('recent-solved-list');
+      if (recentSolvedList) {
+        recentSolvedList.innerHTML = '<p>Failed to load progress data.</p>';
+      }
     }
   }
   
   loadUserProgress();
-  document.addEventListener('DOMContentLoaded', checkAuth);
-  checkAuth(); // Also check immediately
 </script>
 
 <style>

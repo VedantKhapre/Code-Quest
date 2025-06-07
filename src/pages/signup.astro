@@ -6,7 +6,7 @@ import Layout from '../layouts/Layout.astro';
   <div class="container">
     <div class="auth-form">
       <h1>Create Account</h1>
-      <form id="signup-form">
+      <form id="signup-form" autocomplete="off" aria-label="Sign up form">
         <div class="form-group">
           <label for="username">Name</label>
           <input type="text" id="name" name="name" placeholder="Enter your name" required />
@@ -19,16 +19,29 @@ import Layout from '../layouts/Layout.astro';
         
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Enter password" required />
+          <div style="position:relative;">
+            <input type="password" id="password" name="password" placeholder="Enter password" required aria-required="true" />
+            <button type="button" id="toggle-password" aria-label="Show password" tabindex="-1" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;">👁️</button>
+          </div>
         </div>
         
         <div class="form-group">
           <label for="confirmPassword">Confirm Password</label>
-          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required />
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required aria-required="true" />
+        </div>
+
+        <div class="form-group">
+          <select id="role" name="role" required style="display: none;">
+            <option value="user">User</option>
+          </select>
         </div>
         
-        <div id="error-message" class="error-message"></div>
-        <button type="submit" class="btn-submit" id="signup-btn">Create Account</button>
+        <div id="error-message" class="error-message" role="alert"></div>
+        <div id="success-message" class="success-message" role="status"></div>
+        <button type="submit" class="btn-submit" id="signup-btn">
+          <span id="signup-btn-text">Create Account</span>
+          <span id="signup-spinner" style="display:none;">⏳</span>
+        </button>
       </form>
       
       <div class="auth-footer">
@@ -39,65 +52,82 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-document.getElementById('signup-form').addEventListener('submit', async (e) => {
+document.getElementById('signup-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  const name = document.getElementById('name').value;
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
+
+  const name = (document.getElementById('name') as HTMLInputElement | null)?.value.trim() || '';
+  const email = (document.getElementById('email') as HTMLInputElement | null)?.value.trim() || '';
+  const password = (document.getElementById('password') as HTMLInputElement | null)?.value || '';
+  const confirmPassword = (document.getElementById('confirmPassword') as HTMLInputElement | null)?.value || '';
   const errorElement = document.getElementById('error-message');
-  const signupBtn = document.getElementById('signup-btn');
-  
+  const successElement = document.getElementById('success-message');
+  const signupBtn = document.getElementById('signup-btn') as HTMLButtonElement | null;
+  const signupBtnText = document.getElementById('signup-btn-text');
+  const signupSpinner = document.getElementById('signup-spinner');
+
+  if (!errorElement || !signupBtn || !signupBtnText || !signupSpinner || !successElement) return;
+
   errorElement.textContent = '';
-  
+  successElement.textContent = '';
+
   if (!name) {
     errorElement.textContent = 'Name is required';
     return;
   }
-  
   if (!email) {
     errorElement.textContent = 'Email is required';
     return;
   }
-  
   if (!password) {
     errorElement.textContent = 'Password is required';
     return;
   }
-  
   if (password !== confirmPassword) {
     errorElement.textContent = 'Passwords do not match';
     return;
   }
-  
+
   signupBtn.disabled = true;
-  signupBtn.textContent = 'Creating account...';
-  
+  signupBtnText.style.display = 'none';
+  signupSpinner.style.display = 'inline-block';
+
   try {
     const response = await fetch('/api/signup', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, email, password })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role: 'user' }) // Always user
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'Registration failed');
     }
-    
-    console.log('Registration successful:', data);
 
-    window.location.href = '/login?registered=true';
-    
+    successElement.textContent = 'Registration successful! Redirecting to login...';
+    (e.target as HTMLFormElement).reset();
+    setTimeout(() => {
+      window.location.href = '/login?registered=true';
+    }, 1200);
+
   } catch (error) {
-    console.error('Registration error:', error);
-    errorElement.textContent = error.message || 'Registration failed';
+    let message = 'Registration failed';
+    if (error && typeof error === 'object' && 'message' in error) {
+      message = (error as { message: string }).message;
+    }
+    errorElement.textContent = message;
+  } finally {
     signupBtn.disabled = false;
-    signupBtn.textContent = 'Create Account';
+    signupBtnText.style.display = 'inline';
+    signupSpinner.style.display = 'none';
+  }
+});
+
+// Password visibility toggle
+document.getElementById('toggle-password')?.addEventListener('click', () => {
+  const pwd = document.getElementById('password') as HTMLInputElement | null;
+  if (pwd) {
+    pwd.type = pwd.type === 'password' ? 'text' : 'password';
   }
 });
 </script>
@@ -138,7 +168,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
     font-size: 0.9rem;
   }
   
-  input {
+  input, select {
     width: 100%;
     padding: 10px;
     border-radius: 4px;
@@ -149,7 +179,7 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
     transition: border-color 0.2s ease;
   }
   
-  input:focus {
+  input:focus, select:focus {
     border-color: var(--accent-color);
     outline: none;
     box-shadow: 0 0 0 2px rgba(79, 158, 250, 0.2);
@@ -158,6 +188,14 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
   .error-message {
     color: #ff5555;
     font-size: 0.9rem;
+    margin-bottom: 1rem;
+    min-height: 1rem;
+    text-align: center;
+  }
+  
+  .success-message {
+    color: #4caf50;
+    font-size: 0.95rem;
     margin-bottom: 1rem;
     min-height: 1rem;
     text-align: center;
@@ -204,46 +242,3 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
     text-decoration: underline;
   }
 </style>
-
-<script>
-  document.getElementById('signup-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const form = e.target;
-    const name = form.name.value;
-    const email = form.email.value;
-    const password = form.password.value;
-    const confirmPassword = form.confirmPassword.value;
-    const errorEl = document.getElementById('error-message');
-    
-    // Clear previous errors
-    errorEl.textContent = '';
-    
-    // Validate form
-    if (password !== confirmPassword) {
-      errorEl.textContent = 'Passwords do not match';
-      return;
-    }
-    
-    try {
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-      
-      // Redirect to login page or dashboard
-      window.location.href = '/login?registered=true';
-    } catch (error) {
-      errorEl.textContent = error.message;
-    }
-  });
-</script>

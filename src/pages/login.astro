@@ -16,6 +16,14 @@ import Layout from '../layouts/Layout.astro';
           <label for="password">Password</label>
           <input type="password" id="password" name="password" placeholder="Enter password" required />
         </div>
+
+        <!-- <div class="form-group">
+          <label for="role">Role</label>
+          <select id="role" name="role" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div> -->
         
         <div class="form-options">
           <label class="remember-me">
@@ -34,73 +42,70 @@ import Layout from '../layouts/Layout.astro';
       </div>
     </div>
   </div>
-</Layout>
 
-<script>
-// Login function using the API
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const errorElement = document.getElementById('error-message');
-  const loginBtn = document.getElementById('login-btn');
-  
-  errorElement.textContent = '';
-  
-  if (!email) {
-    errorElement.textContent = 'Email is required';
-    return;
-  }
-  
-  if (!password) {
-    errorElement.textContent = 'Password is required';
-    return;
-  }
+  <script>
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-  loginBtn.disabled = true;
-  loginBtn.textContent = 'Logging in...';
-  
-  try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password })
+      const email = (document.getElementById('email') as HTMLInputElement | null)?.value || '';
+      const password = (document.getElementById('password') as HTMLInputElement | null)?.value || '';
+      const errorElement = document.getElementById('error-message');
+      const loginBtn = document.getElementById('login-btn') as HTMLButtonElement | null;
+
+      if (!errorElement || !loginBtn) return;
+
+      errorElement.textContent = '';
+
+      if (!email) {
+        errorElement.textContent = 'Email is required';
+        return;
+      }
+
+      if (!password) {
+        errorElement.textContent = 'Password is required';
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in...';
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Redirect based on role
+        if (data.user.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/';
+        }
+
+      } catch (error) {
+        let message = 'Login failed';
+        if (error && typeof error === 'object' && 'message' in error) {
+          message = (error as { message: string }).message;
+        }
+        errorElement.textContent = message;
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Log In';
+      }
     });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
-    
-    console.log('Login successful:', data);
-    
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirectUrl = urlParams.get('redirect') || '/';
-    
-    console.log("Login successful, redirecting to:", redirectUrl);
-    
-    errorElement.textContent = 'Login successful! Redirecting...';
-    errorElement.style.color = '#4caf50';
-
-    setTimeout(() => {
-      window.location.href = redirectUrl;
-    }, 500);
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    errorElement.textContent = error.message || 'Login failed';
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'Log In';
-  }
-});
-</script>
+  </script>
+</Layout>
 
 <style>
   .container {
@@ -139,7 +144,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   }
   
   input[type="email"],
-  input[type="password"] {
+  input[type="password"],
+  select {
     width: 100%;
     padding: 10px;
     border-radius: 4px;
@@ -150,7 +156,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     transition: border-color 0.2s ease;
   }
   
-  input:focus {
+  input:focus,
+  select:focus {
     border-color: var(--accent-color);
     outline: none;
     box-shadow: 0 0 0 2px rgba(79, 158, 250, 0.2);

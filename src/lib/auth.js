@@ -26,11 +26,9 @@ export const authStore = {
 
 export function initAuth() {
   if (typeof window === 'undefined') return;
-  
   try {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
-    
     if (token && userStr) {
       const user = JSON.parse(userStr);
       authStore.set({
@@ -58,50 +56,46 @@ export function initAuth() {
   }
 }
 
-export async function login(email, password) {
+/**
+ * Login a user (role can be 'user' or 'admin')
+ */
+export async function login(email, password, role = 'user') {
   try {
-    const response = await simulateApiCall({ email, password });
-    
+    // Only allow 'user' or 'admin'
+    const safeRole = role === 'admin' ? 'admin' : 'user';
+    const response = await simulateApiCall({ email, password, role: safeRole }, 'login');
     const { token, user } = response;
-    
-    // Store in localStorage
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
-    
-    // Update the store
     authStore.set({
       isLoggedIn: true,
       user,
       token,
       loading: false
     });
-    
-    return { success: true };
+    return { success: true, user };
   } catch (error) {
     return { success: false, error: error.message };
   }
 }
 
-// Register function
-export async function register(name, email, password) {
+/**
+ * Register a user (role can be 'user' or 'admin')
+ */
+export async function register(name, email, password, role = 'user') {
   try {
-    // In a real app, this would be an API call
-    // For this demo, we'll simulate a successful registration
-    const response = await simulateApiCall({ name, email, password }, 'register');
-    
+    // Only allow 'user' or 'admin'
+    const safeRole = role === 'admin' ? 'admin' : 'user';
+    const response = await simulateApiCall({ name, email, password, role: safeRole }, 'register');
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }
 }
 
-// Logout function
 export function logout() {
-  // Clear localStorage
   localStorage.removeItem('token');
   localStorage.removeItem('user');
-  
-  // Update store
   authStore.set({
     isLoggedIn: false,
     user: null,
@@ -110,21 +104,35 @@ export function logout() {
   });
 }
 
-// Helper function to simulate API calls
+// Helper: get current role
+export function getRole() {
+  const user = authStore.get().user;
+  return user?.role || 'user';
+}
+
+// Helper: check if current user is admin
+export function isAdmin() {
+  return getRole() === 'admin';
+}
+
+// Simulated API call for demo/dev
 async function simulateApiCall(data, type = 'login') {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      // Simulate validation
+      // Validation
       if (!data.email) {
         reject(new Error('Email is required'));
         return;
       }
-      
       if (!data.password) {
         reject(new Error('Password is required'));
         return;
       }
-      
+
+      // Validate and set role
+      const allowedRoles = ['user', 'admin'];
+      let userRole = allowedRoles.includes(data.role) ? data.role : 'user';
+
       if (type === 'login') {
         // Simulate login response
         resolve({
@@ -133,6 +141,7 @@ async function simulateApiCall(data, type = 'login') {
             id: '123',
             name: data.email.split('@')[0],
             email: data.email,
+            role: userRole,
             createdAt: new Date().toISOString()
           }
         });
@@ -142,6 +151,6 @@ async function simulateApiCall(data, type = 'login') {
           success: true
         });
       }
-    }, 500); // Simulate network delay
+    }, 500);
   });
 }

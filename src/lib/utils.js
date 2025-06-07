@@ -27,7 +27,8 @@ export function createToken(user, expiresIn = '7d') {
   return jwt.sign(
     { 
       id: user.id,
-      email: user.email
+      email: user.email,
+      role: user.role // Include role in the token!
     },
     JWT_SECRET,
     { expiresIn }
@@ -42,4 +43,14 @@ export function createToken(user, expiresIn = '7d') {
 export function getUserIdFromToken(token) {
   const decoded = verifyToken(token);
   return decoded?.id || null;
+}
+
+/**
+ * Get user role from token
+ * @param {string} token - The JWT token
+ * @returns {string|null} The user role or null if invalid
+ */
+export function getUserRoleFromToken(token) {
+  const decoded = verifyToken(token);
+  return decoded?.role || null;
 }
