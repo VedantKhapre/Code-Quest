@@ -1,0 +1,23 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CodeEditor from '../components/CodeEditor.jsx';
+import MarkdownEditor from '../components/MarkdownEditor.jsx';
+import '../styles/global.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+---
+
+<Layout title="Astro Combined Editor">
+  <div class="app-container">
+    <section class="code-editor-section">
+      <div class="code-editor-container">
+        <CodeEditor client:only="react" />
+      </div>
+    </section>
+
+    <section class="markdown-editor-section">
+      <div class="markdown-editor-container">
+        <MarkdownEditor client:only="react" />
+      </div>
+    </section>
+  </div>
+</Layout>
