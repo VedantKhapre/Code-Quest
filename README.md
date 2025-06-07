@@ -64,8 +64,7 @@ Code Quest is an interactive platform for solving coding challenges with an inte
 
 ```bash
 # Using Docker
-docker build -t code-execution-service -f Dockerfile.server .
-docker run -p 5000:5000 code-execution-service
+docker-compose up -d
 
 # Or directly
 node src/server.js
@@ -129,6 +128,11 @@ This project uses Prisma as an ORM. If you want to set up a database for user au
    ```bash
    npx prisma migrate dev
    ```
+3. Launch Prisma Studio to view and edit your database:
+   ```bash
+   npx prisma studio
+   ```
+   This will start a visual database editor at `http://localhost:5555`
 
 ## Contributing
 
