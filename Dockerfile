@@ -3,7 +3,10 @@ FROM ubuntu:22.04
 # Install compilers and dependencies
 RUN apt-get update && apt-get install -y \
     g++ \
+    gcc \
     openjdk-17-jdk \
+    python3 \
+    python3-pip \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,6 +31,7 @@ COPY src/server.js ./src/
 
 # Expose port
 EXPOSE 5000
+EXPOSE 5432
 
 # Command to run the server
 CMD ["node", "src/server.js"]
