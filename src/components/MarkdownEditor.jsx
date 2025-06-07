@@ -92,11 +92,11 @@ function hello() {
       let heightLeft = imgHeight;
 
       while (heightLeft > 0) {
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight, '', 'FAST', 0);
         heightLeft -= pdfHeight;
         if (heightLeft > 0) {
           pdf.addPage();
-          position = 0;
+          position -= pdfHeight;
         }
       }
 
@@ -162,7 +162,11 @@ function hello() {
     <div className="container-fluid p-0 markdown-editor-custom">
       
       <div className="d-flex justify-content-between align-items-center flex-wrap p-2 header-container">
-        <h1 className="markdown-title">Markdown Editor</h1>
+        <img className="Markdown-Title"
+          src="/Frame 9.svg" 
+          alt="CodeQuest Logo" 
+          style={{ height: "50px" }} 
+        />
       </div>
       
       <div className="markdown-full-width">
@@ -200,9 +204,6 @@ function hello() {
             fontFamily: "Arial, sans-serif"
           }}
         >
-          <h2 style={{ borderBottom: "1px solid #eee", paddingBottom: "10px", marginBottom: "20px" }}>
-            {markdown.split('\n')[0]?.replace(/^#\s+/, '') || 'Markdown Export'}
-          </h2>
           <MDEditor.Markdown
             source={markdown}
             rehypePlugins={[rehypeRaw]}
