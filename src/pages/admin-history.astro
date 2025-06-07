@@ -1,0 +1,267 @@
+---
+// filepath: c:\Users\slimebot\Downloads\Code-Quest-semi-final\Code-Quest-buff\src\pages\admin-history.astro
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Admin Submission History">
+  <div class="container profile-container">
+    <h1>Submission History</h1>
+    <button 
+      onclick="window.history.back()" 
+      class="btn-edit back-btn" 
+      style="margin-bottom:1.5rem; display: flex; align-items: center; gap: 0.5rem;"
+    >
+      <span style="font-size:1.2em;">&#8592;</span> Back
+    </button>
+    <div id="login-required" style="display:none;">
+      <h2>Login Required</h2>
+      <p>Please <a href="/login">log in</a> as an admin to view this page.</p>
+    </div>
+    <div id="history-content" style="display:none;">
+      <h2>Your Submitted Problems</h2>
+      <div id="admin-history-list">
+        <p>Loading...</p>
+      </div>
+      <div id="problem-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10000; align-items:center; justify-content:center;">
+        <div id="problem-modal-content" style="background:#111; color:#fff; padding:2rem; border-radius:10px; max-width:700px; width:90%; position:relative;">
+          <button id="close-modal" style="position:absolute; top:10px; right:10px; font-size:1.5rem; background:none; border:none; color:#fff; cursor:pointer;">&times;</button>
+          <pre id="problem-schema" style="white-space:pre-wrap; word-break:break-all; background:none; color:#fff; font-size:1rem;"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  async function showAdminHistory() {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    const loginRequired = document.getElementById('login-required');
+    const historyContent = document.getElementById('history-content');
+    const historyList = document.getElementById('admin-history-list');
+
+    if (!token || !userStr) {
+      if (loginRequired) loginRequired.style.display = 'block';
+      if (historyContent) historyContent.style.display = 'none';
+      return;
+    }
+
+    let user;
+    try {
+      user = JSON.parse(userStr);
+    } catch {
+      if (loginRequired) loginRequired.style.display = 'block';
+      if (historyContent) historyContent.style.display = 'none';
+      return;
+    }
+
+    if (user.role !== 'admin' || !user.email) {
+      if (loginRequired) loginRequired.style.display = 'block';
+      if (historyContent) historyContent.style.display = 'none';
+      return;
+    }
+
+    // Fetch questions.json at runtime
+    let questions = [];
+    try {
+      const res = await fetch('/src/Questions/question.json');
+      questions = await res.json();
+    } catch {
+      if (historyList) historyList.innerHTML = `<p>Could not load questions data.</p>`;
+      return;
+    }
+
+    // Filter questions by admin email
+    const submitted = questions.filter((q: any) => q.admin === user.email);
+
+    if (historyContent) historyContent.style.display = 'block';
+    if (loginRequired) loginRequired.style.display = 'none';
+
+    if (!historyList) return;
+
+    if (submitted.length === 0) {
+      historyList.innerHTML = `<p>You have not submitted any problems yet.</p>`;
+    } else {
+      historyList.innerHTML = `
+        <p>You have submitted <strong>${submitted.length}</strong> problem(s):</p>
+        <ul>
+          ${submitted.map((q: any, idx: number) => `
+            <li>
+              <a 
+                href="#"
+                class="problem-link group block p-4 mb-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm transition-all hover:shadow-md hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer"
+                data-idx="${idx}"
+                style="text-decoration:none;"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="problem-id-badge text-xs font-bold text-white bg-blue-600 dark:bg-blue-500 px-2 py-1 rounded-lg">
+                    #${q.id}
+                  </span>
+                  <span class="problem-title text-md font-medium text-gray-900 dark:text-gray-100 group-hover:underline">
+                    ${q.title}
+                  </span>
+                </div>
+              </a>
+            </li>
+          `).join('')}
+        </ul>
+      `;
+
+      // Add click listeners to each problem link
+      document.querySelectorAll('.problem-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const idxAttr = (e.currentTarget as HTMLElement).getAttribute('data-idx');
+          const idx = parseInt(idxAttr ?? '0');
+          const problem = submitted[idx];
+          const modal = document.getElementById('problem-modal');
+          const schema = document.getElementById('problem-schema');
+          if (modal && schema) {
+            schema.textContent = JSON.stringify(problem, null, 2);
+            modal.style.display = 'flex';
+          }
+        });
+      });
+    }
+  }
+
+  // Modal close logic
+  document.addEventListener('DOMContentLoaded', () => {
+    showAdminHistory();
+    const modal = document.getElementById('problem-modal');
+    const closeBtn = document.getElementById('close-modal');
+    if (closeBtn && modal) {
+      closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+    }
+  });
+</script>
+
+<style>
+/* Reuse your profile styles for consistency */
+.profile-container {
+  max-width: 900px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+  min-height: calc(100vh - 6rem);
+}
+h1 {
+  color: var(--text-color);
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+h2 {
+  margin-bottom: 1.25rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  line-height: 1.3;
+}
+.back-btn {
+  background-color: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.back-btn:hover {
+  background-color: var(--accent-hover, #2d6cdf);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+#admin-history-list ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+#admin-history-list li {
+  background: var(--secondary-bg, #23272f);
+  border-radius: 10px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+  font-size: 1.08rem;
+  color: var(--text-color, #fff);
+  word-break: break-word;
+}
+#admin-history-list li:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+  transform: translateY(-2px) scale(1.02);
+  background: var(--accent-color, #2d6cdf);
+  color: #fff;
+}
+#admin-history-list a.problem-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#admin-history-list a.problem-link:hover {
+  text-decoration: underline;
+}
+.problem-id-badge {
+  display: inline-block;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.93rem;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 0.18em 0.85em;
+  letter-spacing: 0.03em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  margin-right: 0.7em;
+  vertical-align: middle;
+  transition: background 0.2s, color 0.2s;
+}
+.problem-link {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1rem;
+  display: block;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.problem-link:hover {
+  background: #e8f0fe;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+  text-decoration: none;
+}
+.problem-title {
+  font-weight: 600;
+  color: #111827;
+  font-size: 1.08rem;
+}
+@media (prefers-color-scheme: dark) {
+  .problem-link {
+    background: #23272f;
+    border: 1px solid #374151;
+    color: #fff;
+  }
+  .problem-link:hover {
+    background: #1e293b;
+  }
+  .problem-title {
+    color: #fff;
+  }
+  .problem-id-badge {
+    background: #2563eb;
+    color: #fff;
+  }
+}
+</style>

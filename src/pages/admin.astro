@@ -1,0 +1,312 @@
+---
+// filepath: c:\Users\slimebot\Downloads\Code-Quest-semi-final\Code-Quest-buff\src\pages\admin.astro
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Admin Dashboard">
+  <div class="container admin-container">
+    <h1>Admin Dashboard</h1>
+    <div id="admin-info" class="admin-info-card"></div>
+    <div id="login-required" style="display:none;">
+      <h2>Admin Login Required</h2>
+      <p>Please <a href="/login">log in</a> as an admin to view this page.</p>
+    </div>
+    <div id="admin-content" style="display:none;">
+      <section class="admin-section">
+        <h2>All Users & Progress</h2>
+        <div id="users-list">
+          <p>Loading users...</p>
+        </div>
+      </section>
+      <section class="admin-section">
+        <h2>Add New Question</h2>
+        <form id="add-question-form">
+          <div class="form-group">
+            <label>Question Number</label>
+            <input type="number" id="question_number" name="question_number" required min="1" />
+          </div>
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="title" name="title" required />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="description" name="description" required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Answer</label>
+            <input type="text" id="answer" name="answer" required />
+          </div>
+          <div class="form-group">
+            <label>Difficulty (1-5)</label>
+            <input type="number" id="difficulty" name="difficulty" min="1" max="5" required />
+          </div>
+          <div class="form-group">
+            <label>Hints (comma separated)</label>
+            <input type="text" id="hints" name="hints" required />
+          </div>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+          <div id="add-question-message" class="error-message"></div>
+          <button type="submit" class="btn-submit">Add Question</button>
+        </form>
+      </section>
+
+      </section>
+    </div>
+  </div>
+</Layout>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Auth check
+  const userStr = localStorage.getItem('user');
+  const token = localStorage.getItem('token');
+  const loginRequired = document.getElementById('login-required');
+  const adminContent = document.getElementById('admin-content');
+  if (!loginRequired || !adminContent) return;
+  if (!userStr || !token) {
+    loginRequired.style.display = 'block';
+    adminContent.style.display = 'none';
+    return;
+  }
+  const user = JSON.parse(userStr);
+  if (user.role !== 'admin') {
+    loginRequired.style.display = 'block';
+    adminContent.style.display = 'none';
+    return;
+  }
+  loginRequired.style.display = 'none';
+  adminContent.style.display = 'block';
+
+  // Show admin info
+  const adminInfo = document.getElementById('admin-info');
+  if (adminInfo && user) {
+    adminInfo.innerHTML = `
+      <div>
+        <strong>Welcome, ${user.name || 'Admin'}!</strong><br>
+        <span style="font-size:0.95em;color:var(--text-secondary);">${user.email}</span>
+      </div>
+    `;
+  }
+
+  // Load users and progress
+  async function loadUsers() {
+    const usersList = document.getElementById('users-list');
+    if (!usersList) return;
+    try {
+      const res = await fetch('/api/admin/users?token=' + encodeURIComponent(token || ''));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load users');
+      if (!Array.isArray(data.users) || data.users.length === 0) {
+        usersList.innerHTML = '<p>No users found.</p>';
+        return;
+      }
+      usersList.innerHTML = data.users.map((user: any) => `
+        <div class="user-block">
+          <strong>${user.name || '(No Name)'}</strong> (${user.email})<br/>
+          Role: ${user.role}<br/>
+          Progress: ${user.progress?.length || 0} solved
+        </div>
+      `).join('');
+    } catch (err) {
+      usersList.innerHTML = '<p>Error loading users.</p>';
+    }
+  }
+  loadUsers();
+
+  // Auto-increment question number for admin form
+  async function setNextQuestionNumber() {
+    try {
+      // Try to fetch all questions (adjust endpoint if needed)
+      const res = await fetch('/api/questions');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data.questions)) return;
+      const maxNum = data.questions.reduce((max: number, q: any) => Math.max(max, q.question_number || 0), 0);
+      const nextNum = maxNum + 1;
+      const qNumInput = document.getElementById('question_number') as HTMLInputElement | null;
+      if (qNumInput) qNumInput.value = nextNum.toString();
+    } catch (err) {
+      // Fallback: leave blank
+    }
+  }
+  setNextQuestionNumber();
+
+  // Add question
+  document.getElementById('add-question-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = (document.getElementById('title') as HTMLInputElement | null)?.value || '';
+    const description = (document.getElementById('description') as HTMLTextAreaElement | null)?.value || '';
+    const answer = (document.getElementById('answer') as HTMLInputElement | null)?.value || '';
+    const difficulty = parseInt((document.getElementById('difficulty') as HTMLInputElement | null)?.value || '1', 10);
+    const hintsRaw = (document.getElementById('hints') as HTMLInputElement | null)?.value || '';
+    const hints = hintsRaw.split(',').map(h => h.trim()).filter(Boolean);
+    const name = (document.getElementById('name') as HTMLInputElement | null)?.value || '';
+    const msg = document.getElementById('add-question-message');
+    const submitBtn = (e.submitter || document.querySelector('.btn-submit')) as HTMLButtonElement | null;
+    if (!msg) return;
+    msg.textContent = '';
+    msg.style.color = '#ff5555';
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      // Fetch all questions to determine the next question number
+      const resQuestions = await fetch('/api/questions');
+      let nextQuestionNumber = 1;
+      if (resQuestions.ok) {
+        const data = await resQuestions.json();
+        if (Array.isArray(data.questions)) {
+          const maxNum = data.questions.reduce((max: number, q: any) => Math.max(max, q.question_number || 0), 0);
+          nextQuestionNumber = maxNum + 1;
+        }
+      }
+
+      const res = await fetch('/api/admin/add-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question_number: nextQuestionNumber,
+          title,
+          description,
+          answer,
+          difficulty,
+          hints: JSON.stringify(hints),
+          name,
+          token
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to add question');
+      msg.textContent = 'Question added successfully!';
+      msg.style.color = '#4caf50';
+      (e.target as HTMLFormElement).reset();
+    } catch (err) {
+      let message = 'Failed to add question';
+      if (err && typeof err === 'object' && 'message' in err) {
+        message = (err as { message: string }).message;
+      }
+      msg.textContent = message;
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
+
+  // Load my submitted questions
+  async function loadMyQuestions() {
+    const myQuestionsList = document.getElementById('my-questions-list');
+    if (!myQuestionsList) return;
+    try {
+      const res = await fetch('/api/admin/my-questions?token=' + encodeURIComponent(token || ''));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load questions');
+      if (!Array.isArray(data.questions) || data.questions.length === 0) {
+        myQuestionsList.innerHTML = '<p>No questions submitted by you.</p>';
+        return;
+      }
+      myQuestionsList.innerHTML = data.questions.map((q: any) => `
+        <div class="user-block">
+          <strong>Q${q.question_number}: ${q.title}</strong><br/>
+          Difficulty: ${q.difficulty} <br/>
+          <button class="edit-question-btn" data-id="${q.id}">Edit</button>
+        </div>
+      `).join('');
+      // Add edit button listeners
+      document.querySelectorAll('.edit-question-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = (e.target as HTMLButtonElement).dataset.id;
+          // You can open a modal or redirect to an edit page
+          alert('Edit functionality coming soon for question ID: ' + id);
+        });
+      });
+    } catch (err) {
+      myQuestionsList.innerHTML = '<p>Error loading your questions.</p>';
+    }
+  }
+  loadMyQuestions();
+});
+</script>
+
+<style>
+.admin-container {
+  max-width: 900px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+.admin-section {
+  background: var(--secondary-bg);
+  border-radius: 10px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 10px var(--shadow-color);
+}
+.user-block {
+  background: var(--primary-bg);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+.admin-info-card {
+  background: var(--primary-bg);
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  border: 1px solid var(--border-color);
+  font-size: 1.1rem;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+#admin-info strong {
+  font-size: 1.2rem;
+}
+.form-group {
+  margin-bottom: 1.2rem;
+}
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+  font-size: 1rem;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-submit:hover {
+  background-color: var(--accent-hover);
+}
+.error-message {
+  color: #ff5555;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  min-height: 1rem;
+  text-align: center;
+}
+</style>
