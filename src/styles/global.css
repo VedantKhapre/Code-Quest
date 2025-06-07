@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
 :root {
-    --navbar-height: 60px;
+  --navbar-height: 60px;
   --primary-bg: #0d1117;
   --secondary-bg: #1a1f29;
   --text-color: #f0f6fc;
@@ -42,6 +42,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 body {
@@ -51,24 +53,21 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 9999;
+  display: flex;
+  justify-content: space-between;
 }
 
 ::-webkit-scrollbar {
-    .navbar {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      width: 100% !important;
-      z-index: 9999 !important;
-      display: flex !important;
-      justify-content: space-between !important;
-    }
-    
-    body {
-      padding-top: var(--navbar-height);
-      position: relative;
-    }
   width: 8px;
   height: 8px;
 }
@@ -85,11 +84,6 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-hover);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
 .app-container {
@@ -122,17 +116,17 @@ body {
 }
 
 .markdown-editor-container {
-flex: 1;
-width: 100%;
-background: var(--md-editor-bg);
-box-shadow: none;
-border-radius: 0;
-overflow: hidden;
-display: flex;
-flex-direction: column;
-height: 100vh;
-padding: 0;
-margin: 0;
+  flex: 1;
+  width: 100%;
+  background: var(--secondary-bg);
+  box-shadow: none;
+  border-radius: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
 }
 
 .code-editor-section .editor-container {
@@ -242,25 +236,31 @@ margin: 0;
   height: 100%;
   padding: 15px;
   flex: 1;
+  overflow: hidden;
+}
 
-  .markdown-side-by-side .editor-side .w-md-editor {
-    height: 100% !important;
+/* Extracted nested rules, assuming they belong within editor/output panels */
+.code-editor-section .editor-panel .markdown-side-by-side .editor-side .w-md-editor,
+.code-editor-section .output-panel .markdown-side-by-side .editor-side .w-md-editor {
+  height: 100%;
+  min-height: 100%;
+  border-radius: 0;
+}
 
-    .markdown-editor-custom {
-      position: relative;
-      z-index: 800;
-    }
-    
-    .markdown-editor-custom .w-md-editor-toolbar {
-      position: sticky !important;
-      top: var(--navbar-height) !important;
-      background-color: var(--md-bg-secondary) !important;
-      padding: 4px 8px !important;
-      border-radius: 0 !important;
-      margin: 0 !important;
-    }    min-height: 100% !important;
-    border-radius: 0 !important;
-  }  overflow: hidden;
+.code-editor-section .editor-panel .markdown-side-by-side .editor-side .w-md-editor .markdown-editor-custom,
+.code-editor-section .output-panel .markdown-side-by-side .editor-side .w-md-editor .markdown-editor-custom {
+  position: relative;
+  z-index: 800;
+}
+
+.code-editor-section .editor-panel .markdown-side-by-side .editor-side .w-md-editor .markdown-editor-custom .w-md-editor-toolbar,
+.code-editor-section .output-panel .markdown-side-by-side .editor-side .w-md-editor .markdown-editor-custom .w-md-editor-toolbar {
+  position: sticky;
+  top: var(--navbar-height);
+  background-color: var(--md-bg-secondary);
+  padding: 4px 8px;
+  border-radius: 0;
+  margin: 0;
 }
 
 .code-editor-section .resize-handle {
@@ -320,10 +320,6 @@ margin: 0;
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.code-editor-section .chat-message:hover {
-  transform: scale(1.02);
-}
-
 .code-editor-section .chat-message--user {
   background: linear-gradient(135deg, #1c64da, #2a7aeb);
   color: white;
@@ -335,7 +331,6 @@ margin: 0;
   background: linear-gradient(135deg, #1e232c, #2a2f38);
   color: var(--text-color);
   align-self: flex-start;
-  border-left: 2px solid var(--accent-color);
 }
 
 .code-editor-section .chat-message--loading {
@@ -343,11 +338,39 @@ margin: 0;
   font-style: italic;
   color: var(--text-muted);
   background-color: var(--chat-assistant-bg);
-  border-left: 2px solid var(--accent-color);
   position: relative;
   animation: pulse 1.5s infinite ease-in-out;
 }
 
+.model-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background-color: var(--secondary-bg);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.model-selector label {
+  font-size: 14px;
+  color: var(--text-color);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.model-selector select {
+  background-color: var(--primary-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 .code-editor-section .chat-input-area {
   display: flex;
   padding: 1rem;
@@ -383,112 +406,6 @@ margin: 0;
 
 .code-editor-section .chat-send-btn {
   background-color: var(--accent-color);
-  .export-preview {
-    font-family: 'Arial', sans-serif !important;
-    line-height: 1.6 !important;
-    color: #333 !important;
-  }
-  
-  .export-preview h1, 
-  .export-preview h2, 
-  .export-preview h3 {
-    margin-top: 1.5em !important;
-    margin-bottom: 0.5em !important;
-    font-weight: 600 !important;
-  }
-  
-  .export-preview p {
-    margin-bottom: 1em !important;
-  }
-  
-  .export-preview a {
-    color: #0366d6 !important;
-    text-decoration: none !important;
-  }
-  
-  .progress-container {
-    margin-top: 1.5rem;
-  }
-  
-  .progress-bar-container {
-    margin-bottom: 2rem;
-  }
-  
-  .progress-info {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-    color: var(--text-color);
-    font-size: 0.9rem;
-  }
-  
-  .progress-outer {
-    background-color: var(--primary-bg);
-    border-radius: 8px;
-    height: 12px;
-    overflow: hidden;
-  }
-  
-  .progress-inner {
-    background: linear-gradient(90deg, var(--accent-color), #5cb85c);
-    height: 100%;
-    border-radius: 8px;
-    transition: width 0.5s ease-out;
-  }
-  
-  .recent-solved h3 {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    color: var(--accent-color);
-  }
-  
-  .solved-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .loading-text {
-    color: var(--text-muted);
-    font-style: italic;
-  }
-  
-  .solved-item {
-    background-color: var(--primary-bg);
-    border-radius: 8px;
-    padding: 12px;
-    border-left: 3px solid var(--accent-color);
-  }
-  
-  .solved-info h4 {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-color);
-  }
-  
-  .solved-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-  }
-  
-  .solved-difficulty {
-    background-color: var(--secondary-bg);
-    padding: 2px 8px;
-    border-radius: 12px;
-  }
-  
-  .solved-date {
-    font-style: italic;
-  }
-  
-  .export-preview img {
-    max-width: 100% !important;
-    height: auto !important;
-    display: block !important;
-    margin: 1em auto !important;
-  }
   color: white;
   border: none;
   border-radius: 6px;
@@ -542,13 +459,13 @@ margin: 0;
 }
 
 .markdown-full-width .w-md-editor-content {
-  height: calc(100vh - var(--navbar-height) - 48px) !important;
+  height: calc(100vh - var(--navbar-height) - 48px);
 }
 
 .markdown-title {
   padding: 0;
   margin: 0;
-  color: skyblue;
+  color: mediumpurple;
 }
 
 .toolbar-btn-with-text {
@@ -585,12 +502,28 @@ margin: 0;
 }
 
 .w-md-editor-toolbar {
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa; /* Base style */
+  border-bottom: 1px solid #e9ecef; /* Base style */
   padding: 8px 12px;
   min-height: 48px;
   display: flex;
   align-items: center;
+  position: sticky; /* Theme override */
+  top: var(--navbar-height); /* Theme override */
+  z-index: 900; /* Theme override */
+  background-color: var(--md-bg-primary); /* Theme override */
+  border-bottom: 1px solid var(--border-color); /* Theme override */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Theme override */
+}
+
+.markdown-editor-container .w-md-editor {
+  padding-top: 0;
+}
+
+.w-md-editor-toolbar ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .w-md-editor-toolbar ul li button {
@@ -602,51 +535,35 @@ margin: 0;
   min-height: 30px;
   min-width: 30px;
   font-size: 14px;
+  background: none; /* Added for base style */
+  border: none; /* Added for base style */
+  cursor: pointer; /* Added for base style */
 }
 
 .w-md-editor-toolbar ul li button svg {
   width: 16px;
   height: 16px;
+  vertical-align: middle; /* Added for alignment */
 }
 
-.w-md-editor-toolbar ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.w-md-editor-toolbar ul li.divider {
+.w-md-editor-toolbar ul li.divider,
+.w-md-editor-toolbar-divider { /* Merged selectors */
   height: 24px;
   margin: 0 6px;
-}
-
-.w-md-editor-toolbar-divider {
-  height: 24px;
-  margin: 0 6px;
+  border-left: 1px solid var(--border-color); /* Example style for divider */
+  align-self: center; /* Align divider vertically */
 }
 
 .w-md-editor-toolbar ul li button span {
   font-size: 13px;
   font-weight: 500;
+  vertical-align: middle; /* Added for alignment */
 }
 
 .w-md-editor-toolbar ul li button:hover {
   background-color: #e9ecef;
   color: #212529;
   transition: all 0.15s ease;
-}
-
-.w-md-editor-toolbar {
-  position: sticky !important;
-  top: var(--navbar-height) !important;
-  z-index: 900 !important;
-  background-color: var(--md-bg-primary) !important;
-  border-bottom: 1px solid var(--border-color) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-}
-
-.markdown-editor-container .w-md-editor {
-  padding-top: 0 !important;
 }
 
 .w-md-editor-toolbar ul li.active button {
@@ -662,13 +579,15 @@ margin: 0;
   padding: 16px;
 }
 
-.upload-btn, .export-btn {
+.upload-btn,
+.export-btn {
   font-weight: 500;
   transition: all 0.2s ease;
   margin-left: 8px;
 }
 
-.upload-btn:hover, .export-btn:hover {
+.upload-btn:hover,
+.export-btn:hover {
   transform: translateY(-1px);
 }
 
@@ -677,7 +596,7 @@ margin: 0;
 }
 
 .questions-container {
-    height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   background-color: var(--secondary-bg);
@@ -728,15 +647,7 @@ margin: 0;
   margin-right: 0.5rem;
 }
 
-.difficulty {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background-color: #ffd700;
-  color: #000;
-  border-radius: 1rem;
-  font-size: 0.9rem;
-  float: right;
-}
+
 
 .question-title {
   font-size: 1.2rem;
@@ -890,13 +801,42 @@ margin: 0;
   font-style: italic;
 }
 
-.export-preview img {
-  max-width: 100% !important;
-  height: auto !important;
-  display: block !important;
-  margin: 1em auto !important;
+/* Export Preview Specific Styles */
+.export-preview {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  color: #333;
 }
 
+.export-preview h1,
+.export-preview h2,
+.export-preview h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.export-preview p {
+  margin-bottom: 1em;
+}
+
+.export-preview a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.export-preview a:hover {
+  text-decoration: underline; /* Added for usability */
+}
+
+.export-preview img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+}
+
+/* Hint System Styles */
 .hint-system {
   margin: 20px 0;
 }
@@ -936,21 +876,19 @@ margin: 0;
   font-size: 13px;
   border-radius: 6px;
   transition: all 0.2s ease;
+  cursor: pointer; /* Added */
 }
 
 .hint-system .btn:hover {
   transform: translateY(-1px);
 }
 
-.hint-system .btn-info {
-  background: linear-gradient(135deg, #4f9efa, #2e87f8);
-  border: none;
-  box-shadow: 0 2px 12px rgba(79, 158, 250, 0.3);
-}
-
+.hint-system .btn-info, /* Combined btn-info and btn-primary as they were identical */
 .hint-system .btn-primary {
   background: linear-gradient(135deg, #4f9efa, #2e87f8);
   border: none;
+  box-shadow: 0 2px 12px rgba(79, 158, 250, 0.3);
+  color: white; /* Added */
 }
 
 .hint-system .btn-secondary {
