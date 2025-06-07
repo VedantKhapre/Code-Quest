@@ -45,9 +45,12 @@ Code Quest is an interactive platform for solving coding challenges with an inte
 3. Set up environment variables:
    Create a `.env` file in the root directory with the following content:
    ```
+   # Database Configuration
    DATABASE_URL="file:./dev.db"
-   PUBLIC_MISTRAL_API_KEY=mistral-key-goes-here
-```
+   
+   # API Keys (replace with your actual keys)
+   PUBLIC_MISTRAL_API_KEY=your_mistral_api_key_here
+   PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
 4. Set up the database:
